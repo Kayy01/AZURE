@@ -229,16 +229,16 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Streamlit user interface
-logo_path = "https://iportal.ncheo.com/images/logo-Icon1.png"  # Change this to the path of your logo file
-
-
+# Ensure necessary session state variables exist
 if "prev_query_type" not in st.session_state:
-    st.session_state.prev_query_type = None  # Track previous query type
+    st.session_state.prev_query_type = []
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 if "uploaded_files" not in st.session_state:
     st.session_state.uploaded_files = []
+
+# Streamlit user interface
+logo_path = "https://iportal.ncheo.com/images/logo-Icon1.png"  # Change this to the path of your logo file
 
 # Custom HTML & CSS for perfect alignment of the title
 st.markdown(
@@ -258,7 +258,7 @@ st.markdown(
 st.sidebar.markdown("### Choose a query type:")
 query_type = st.sidebar.radio("What would you like to ask?", ("Mewah-specific Query", "General Query"))
 
-# **Force reload if query type changes**
+# Force reload if query type changes
 if st.session_state.prev_query_type is not None and query_type != st.session_state.prev_query_type:
     st.session_state.chat_history = []  # Clear chat history
     st.session_state.uploaded_files = []  # Clear uploaded files
@@ -274,36 +274,39 @@ if query_type == "General Query":
 # Chat input for user messages
 user_input = st.chat_input("Ask a question...")
 
+# **Ensure conversation_history is initialized**
+conversation_history = "\n".join([f"{role}: {message}" for role, message in st.session_state.chat_history])
+
 if user_input:
     # Add user message to history
     st.session_state.chat_history.append(("User", user_input))
 
     with st.spinner('Thinking...'):
-        # Build conversation context
+        # Update conversation history after user input
         conversation_history = "\n".join([f"{role}: {message}" for role, message in st.session_state.chat_history])
 
-if query_type == "Mewah-specific Query":
+if user_input:
+    if query_type == "Mewah-specific Query":
         response = search_index(user_input)
+    elif query_type == "General Query":
+        if st.session_state.uploaded_files:
+            all_extracted_texts = ""
+            for uploaded_file in st.session_state.uploaded_files:
+                extracted_text = process_uploaded_file(uploaded_file)
+                if extracted_text:
+                    all_extracted_texts += f"\n\n### File: {uploaded_file.name} ###\n{extracted_text}"
 
-elif query_type == "General Query":
-    if st.session_state.uploaded_files:
-        all_extracted_texts = ""
-        for uploaded_file in st.session_state.uploaded_files:
-            extracted_text = process_uploaded_file(uploaded_file)
-            if extracted_text:
-                all_extracted_texts += f"\n\n### File: {uploaded_file.name} ###\n{extracted_text}"
-
-        if all_extracted_texts:
-            prompt = f"Documents content:\n\n{all_extracted_texts}\n\n{conversation_history}\n\nBot:"
-            response = get_openai_response(prompt)
+            if all_extracted_texts:
+                prompt = f"Documents content:\n\n{all_extracted_texts}\n\n{conversation_history}\n\nBot:"
+                response = get_openai_response(prompt)
+            else:
+                response = "No content extracted from the uploaded files."
         else:
-            response = "No content extracted from the uploaded files."
-    else:
-        prompt = f"{conversation_history}\n\nBot:"
-        response = get_openai_response(prompt)
+            prompt = f"{conversation_history}\n\nBot:"
+            response = get_openai_response(prompt)
 
-# Add bot response to chat history
-st.session_state.chat_history.append(("Bot", response))
+    # Add bot response to chat history
+    st.session_state.chat_history.append(("Bot", response))
 
 # Display chat history for back-to-back conversation
 for role, message in st.session_state.chat_history:
