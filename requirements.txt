@@ -9,4 +9,4 @@ azure-core
 pymupdf
 openpyxl
 fitz
-
+st-pages

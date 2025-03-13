@@ -10,7 +10,6 @@ from langchain_openai import AzureChatOpenAI
 from azure.search.documents import SearchClient
 from azure.core.credentials import AzureKeyCredential
 
-
 OPENAI_API_KEY = 'AloI7eJioMWY1wsd3nDgpsv6gYv3rlZfM92lXxIcUpDAKMj25tbCJQQJ99AKACYeBjFXJ3w3AAABACOGqcXh'  # Replace with your Azure API key'  # Replace with your Azure API key
 AZURE_OPENAI_ENDPOINT = 'https://kareenaopenai2.openai.azure.com/'  # Replace with your Azure endpoint
 OPENAI_DEPLOYMENT_NAME = 'TestingChatbots'  # The deployment name for the model you're using
@@ -104,6 +103,7 @@ def search_index(query):
 # Custom CSS for styling the UI with chatbot-like design
 # Page config
 st.set_page_config(page_title="Azure Chatbot", layout="wide")
+st.logo("https://iportal.ncheo.com/images/logo-Icon1.png") 
 
 # Custom CSS for UI Styling
 st.markdown("""
